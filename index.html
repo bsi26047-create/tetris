@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>テトリス</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app" aria-label="テトリス">
+    <section class="game-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">BLOCK PUZZLE</p>
+          <h1>テトリス</h1>
+        </div>
+        <div class="toolbar">
+          <button class="icon-button" id="startButton" type="button" aria-label="開始 / 一時停止" title="開始 / 一時停止">
+            <span id="startIcon" aria-hidden="true">Ⅱ</span>
+          </button>
+          <button class="icon-button" id="resetButton" type="button" aria-label="リセット" title="リセット">
+            <span aria-hidden="true">↻</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="scoreboard" aria-label="スコア">
+        <div>
+          <span>SCORE</span>
+          <strong id="score">0</strong>
+        </div>
+        <div>
+          <span>LEVEL</span>
+          <strong id="level">1</strong>
+        </div>
+        <div>
+          <span>LINES</span>
+          <strong id="lines">0</strong>
+        </div>
+      </div>
+
+      <div class="play-area">
+        <aside class="side-panel">
+          <span class="panel-label">HOLD</span>
+          <canvas id="hold" width="112" height="112" aria-label="ホールド"></canvas>
+        </aside>
+
+        <div class="board-wrap">
+          <canvas id="tetris" width="300" height="600" aria-label="テトリスの盤面"></canvas>
+          <div class="board-overlay" id="boardOverlay" hidden>
+            <strong id="overlayTitle">PAUSED</strong>
+            <button id="overlayButton" type="button">RESUME</button>
+          </div>
+        </div>
+
+        <aside class="side-panel">
+          <span class="panel-label">NEXT</span>
+          <canvas id="next" width="112" height="256" aria-label="次のミノ"></canvas>
+        </aside>
+      </div>
+
+      <div class="touch-controls" aria-label="タッチ操作">
+        <button type="button" data-action="hold" aria-label="ホールド" title="ホールド">H</button>
+        <button type="button" data-action="rotate" aria-label="回転" title="回転">↻</button>
+        <button type="button" data-action="left" aria-label="左へ移動" title="左へ移動">←</button>
+        <button type="button" data-action="down" aria-label="下へ移動" title="下へ移動">↓</button>
+        <button type="button" data-action="right" aria-label="右へ移動" title="右へ移動">→</button>
+        <button type="button" data-action="drop" aria-label="ハードドロップ" title="ハードドロップ">⇣</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
