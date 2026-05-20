@@ -17,11 +17,13 @@ const resetButton = document.getElementById("resetButton");
 const overlay = document.getElementById("boardOverlay");
 const overlayTitle = document.getElementById("overlayTitle");
 const overlayButton = document.getElementById("overlayButton");
+const bgm = document.getElementById("bgm");
 
 const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30;
 const START_MESSAGE_MS = 900;
+const BGM_VOLUME = 0.36;
 const TYPES = ["I", "J", "L", "O", "S", "T", "Z", "P", "U", "X", "V", "W", "F"];
 const LINE_POINTS = [0, 100, 300, 500, 800];
 
@@ -127,6 +129,42 @@ const state = {
 };
 
 let startMessageTimer = null;
+
+function playBgm() {
+  if (!bgm) {
+    return;
+  }
+
+  bgm.volume = BGM_VOLUME;
+  bgm.loop = true;
+  const playPromise = bgm.play();
+  if (playPromise) {
+    playPromise.catch(() => {});
+  }
+}
+
+function pauseBgm() {
+  if (bgm) {
+    bgm.pause();
+  }
+}
+
+function resetBgm() {
+  if (!bgm) {
+    return;
+  }
+
+  bgm.pause();
+  bgm.currentTime = 0;
+}
+
+function syncBgmWithStatus() {
+  if (state.status === "playing" || state.status === "starting") {
+    playBgm();
+  } else {
+    pauseBgm();
+  }
+}
 
 function createArena() {
   return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
@@ -608,6 +646,7 @@ function updateOverlay() {
   }
 
   startIcon.textContent = state.status === "playing" ? "II" : ">";
+  syncBgmWithStatus();
 }
 
 function isPlaying() {
@@ -687,6 +726,7 @@ function beginStartMessage() {
 
 function newGame() {
   clearStartMessageTimer();
+  resetBgm();
   showGame();
   state.arena = createArena();
   state.active = null;
