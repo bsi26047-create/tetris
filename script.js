@@ -21,6 +21,7 @@ const overlayButton = document.getElementById("overlayButton");
 const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30;
+const START_MESSAGE_MS = 900;
 const TYPES = ["I", "J", "L", "O", "S", "T", "Z", "P", "U", "X", "V", "W", "F"];
 const LINE_POINTS = [0, 100, 300, 500, 800];
 
@@ -124,6 +125,8 @@ const state = {
   status: "home",
   particles: [],
 };
+
+let startMessageTimer = null;
 
 function createArena() {
   return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
@@ -588,14 +591,20 @@ function updateScore() {
 function updateOverlay() {
   const isPaused = state.status === "paused";
   const isGameOver = state.status === "gameover";
-  overlay.hidden = !(isPaused || isGameOver);
+  const isStarting = state.status === "starting";
+  overlay.hidden = !(isPaused || isGameOver || isStarting);
 
   if (isPaused) {
     overlayTitle.textContent = "PAUSED";
     overlayButton.textContent = "RESUME";
+    overlayButton.hidden = false;
   } else if (isGameOver) {
     overlayTitle.textContent = "GAME OVER";
     overlayButton.textContent = "RESTART";
+    overlayButton.hidden = false;
+  } else if (isStarting) {
+    overlayTitle.textContent = "\u30b9\u30bf\u30fc\u30c8";
+    overlayButton.hidden = true;
   }
 
   startIcon.textContent = state.status === "playing" ? "II" : ">";
@@ -626,6 +635,12 @@ function togglePause() {
     pauseGame();
   } else if (state.status === "paused") {
     resumeGame();
+  } else if (state.status === "starting") {
+    clearStartMessageTimer();
+    state.status = "playing";
+    state.dropCounter = 0;
+    state.lastTime = performance.now();
+    updateOverlay();
   } else {
     newGame();
   }
@@ -643,7 +658,35 @@ function showGame() {
   gameScreen.hidden = false;
 }
 
+function clearStartMessageTimer() {
+  if (startMessageTimer !== null) {
+    clearTimeout(startMessageTimer);
+    startMessageTimer = null;
+  }
+}
+
+function beginStartMessage() {
+  clearStartMessageTimer();
+  state.status = "starting";
+  state.dropCounter = 0;
+  state.lastTime = performance.now();
+  updateOverlay();
+
+  startMessageTimer = setTimeout(() => {
+    startMessageTimer = null;
+    if (state.status !== "starting") {
+      return;
+    }
+
+    state.status = "playing";
+    state.dropCounter = 0;
+    state.lastTime = performance.now();
+    updateOverlay();
+  }, START_MESSAGE_MS);
+}
+
 function newGame() {
+  clearStartMessageTimer();
   showGame();
   state.arena = createArena();
   state.active = null;
@@ -657,12 +700,17 @@ function newGame() {
   state.dropCounter = 0;
   state.dropInterval = 1000;
   state.lastTime = performance.now();
-  state.status = "playing";
+  state.status = "starting";
   state.particles = [];
   fillQueue();
   spawnPiece();
   updateScore();
-  updateOverlay();
+  if (state.status === "gameover") {
+    updateOverlay();
+    return;
+  }
+
+  beginStartMessage();
 }
 
 function performAction(action) {
