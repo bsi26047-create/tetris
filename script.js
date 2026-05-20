@@ -5,6 +5,9 @@ const holdContext = holdCanvas.getContext("2d");
 const nextCanvas = document.getElementById("next");
 const nextContext = nextCanvas.getContext("2d");
 
+const homeScreen = document.getElementById("homeScreen");
+const gameScreen = document.getElementById("gameScreen");
+const singlePlayButton = document.getElementById("singlePlayButton");
 const scoreElement = document.getElementById("score");
 const levelElement = document.getElementById("level");
 const linesElement = document.getElementById("lines");
@@ -18,7 +21,7 @@ const overlayButton = document.getElementById("overlayButton");
 const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30;
-const TYPES = ["I", "J", "L", "O", "S", "T", "Z"];
+const TYPES = ["I", "J", "L", "O", "S", "T", "Z", "P", "U", "X", "V", "W", "F"];
 const LINE_POINTS = [0, 100, 300, 500, 800];
 
 const COLORS = {
@@ -29,6 +32,12 @@ const COLORS = {
   S: "#22c55e",
   T: "#a855f7",
   Z: "#ef4444",
+  P: "#ec4899",
+  U: "#14b8a6",
+  X: "#eab308",
+  V: "#84cc16",
+  W: "#06b6d4",
+  F: "#f43f5e",
 };
 
 const SHAPES = {
@@ -67,6 +76,36 @@ const SHAPES = {
     [0, 1, 1],
     [0, 0, 0],
   ],
+  P: [
+    [1, 1, 0],
+    [1, 1, 1],
+    [0, 0, 0],
+  ],
+  U: [
+    [1, 0, 1],
+    [1, 1, 1],
+    [0, 0, 0],
+  ],
+  X: [
+    [0, 1, 0],
+    [1, 1, 1],
+    [0, 1, 0],
+  ],
+  V: [
+    [1, 0, 0],
+    [1, 0, 0],
+    [1, 1, 1],
+  ],
+  W: [
+    [1, 0, 0],
+    [1, 1, 0],
+    [0, 1, 1],
+  ],
+  F: [
+    [0, 1, 1],
+    [1, 1, 0],
+    [0, 1, 0],
+  ],
 };
 
 const state = {
@@ -82,7 +121,7 @@ const state = {
   dropCounter: 0,
   dropInterval: 1000,
   lastTime: 0,
-  status: "playing",
+  status: "home",
   particles: [],
 };
 
@@ -292,12 +331,21 @@ function clearLines() {
   }
 
   if (cleared > 0) {
-    state.score += LINE_POINTS[cleared] * state.level;
+    state.score += getLineScore(cleared);
     state.lines += cleared;
     state.level = Math.floor(state.lines / 10) + 1;
     state.dropInterval = Math.max(90, 1000 - (state.level - 1) * 70);
     updateScore();
   }
+}
+
+function getLineScore(cleared) {
+  if (cleared < LINE_POINTS.length) {
+    return LINE_POINTS[cleared] * state.level;
+  }
+
+  const bonusLines = cleared - (LINE_POINTS.length - 1);
+  return (LINE_POINTS[LINE_POINTS.length - 1] + bonusLines * 450) * state.level;
 }
 
 function burstLine(row) {
@@ -451,7 +499,7 @@ function updateParticles(deltaTime) {
 
 function drawPreviews() {
   drawPreviewCanvas(holdContext, holdCanvas, state.hold ? [state.hold] : []);
-  drawPreviewCanvas(nextContext, nextCanvas, state.nextQueue.slice(0, 4));
+  drawPreviewCanvas(nextContext, nextCanvas, state.nextQueue.slice(0, 1));
 }
 
 function drawPreviewCanvas(ctx, canvas, types) {
@@ -550,7 +598,7 @@ function updateOverlay() {
     overlayButton.textContent = "RESTART";
   }
 
-  startIcon.textContent = state.status === "playing" ? "Ⅱ" : "▶";
+  startIcon.textContent = state.status === "playing" ? "II" : ">";
 }
 
 function isPlaying() {
@@ -583,7 +631,20 @@ function togglePause() {
   }
 }
 
+function showHome() {
+  homeScreen.hidden = false;
+  gameScreen.hidden = true;
+  state.status = "home";
+  updateOverlay();
+}
+
+function showGame() {
+  homeScreen.hidden = true;
+  gameScreen.hidden = false;
+}
+
 function newGame() {
+  showGame();
   state.arena = createArena();
   state.active = null;
   state.hold = null;
@@ -639,6 +700,59 @@ function update(time = 0) {
 startButton.addEventListener("click", togglePause);
 resetButton.addEventListener("click", newGame);
 overlayButton.addEventListener("click", togglePause);
+singlePlayButton.addEventListener("click", newGame);
+
+let boardPointer = null;
+
+boardCanvas.addEventListener("pointerdown", event => {
+  event.preventDefault();
+  boardCanvas.setPointerCapture(event.pointerId);
+  boardPointer = {
+    x: event.clientX,
+    y: event.clientY,
+    time: performance.now(),
+  };
+});
+
+boardCanvas.addEventListener("pointerup", event => {
+  if (!boardPointer) {
+    return;
+  }
+
+  const dx = event.clientX - boardPointer.x;
+  const dy = event.clientY - boardPointer.y;
+  const absX = Math.abs(dx);
+  const absY = Math.abs(dy);
+  const elapsed = performance.now() - boardPointer.time;
+  boardPointer = null;
+
+  if (absX < 14 && absY < 14 && elapsed < 320) {
+    rotatePiece(1);
+    return;
+  }
+
+  if (absY > absX && dy > 42) {
+    hardDrop();
+    return;
+  }
+
+  if (absY > absX && dy < -42) {
+    holdPiece();
+    return;
+  }
+
+  if (absX > 24) {
+    const direction = dx > 0 ? 1 : -1;
+    const steps = clamp(Math.round(absX / 38), 1, 5);
+    for (let i = 0; i < steps; i++) {
+      movePiece(direction);
+    }
+  }
+});
+
+boardCanvas.addEventListener("pointercancel", () => {
+  boardPointer = null;
+});
 
 window.addEventListener("keydown", event => {
   const key = event.key.toLowerCase();
@@ -699,5 +813,5 @@ document.querySelectorAll(".touch-controls button").forEach(button => {
   button.addEventListener("pointerleave", stopRepeat);
 });
 
-newGame();
+showHome();
 requestAnimationFrame(update);

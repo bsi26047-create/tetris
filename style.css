@@ -1,23 +1,31 @@
 :root {
   color-scheme: dark;
   --bg: #111312;
-  --panel: #1a1d1b;
+  --panel: #181b19;
   --panel-2: #222620;
+  --panel-3: #101210;
   --line: rgba(255, 255, 255, 0.12);
   --text: #f5f2ea;
   --muted: #bbb7aa;
   --accent: #2dd4bf;
-  --danger: #ef4444;
   --gold: #f4c542;
+  --danger: #ef4444;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  min-height: 100%;
+}
+
 body {
-  margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  overflow-x: hidden;
+  overscroll-behavior: none;
   background: linear-gradient(145deg, #101211 0%, #171916 44%, #151313 100%);
   color: var(--text);
   font-family: "Segoe UI", Meiryo, system-ui, sans-serif;
@@ -26,11 +34,13 @@ body {
 button {
   color: inherit;
   font: inherit;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .app {
   width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
   padding: 20px;
@@ -41,7 +51,7 @@ button {
   padding: 18px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #181b19;
+  background: var(--panel);
   box-shadow: 0 22px 70px rgba(0, 0, 0, 0.42);
 }
 
@@ -51,6 +61,10 @@ button {
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 14px;
+}
+
+.title-block {
+  min-width: 0;
 }
 
 .eyebrow {
@@ -63,16 +77,21 @@ button {
 
 h1 {
   margin: 0;
-  font-size: clamp(1.75rem, 4vw, 2.7rem);
+  overflow: hidden;
+  font-size: clamp(1.7rem, 4vw, 2.7rem);
   line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .toolbar {
   display: flex;
+  flex: 0 0 auto;
   gap: 8px;
 }
 
 .icon-button,
+.primary-button,
 .touch-controls button,
 .board-overlay button {
   border: 1px solid var(--line);
@@ -87,21 +106,61 @@ h1 {
   height: 44px;
   display: grid;
   place-items: center;
-  font-size: 1.22rem;
-  font-weight: 800;
+  font-size: 0.92rem;
+  font-weight: 900;
 }
 
 .icon-button:hover,
+.primary-button:hover,
 .touch-controls button:hover,
 .board-overlay button:hover {
-  border-color: rgba(45, 212, 191, 0.55);
+  border-color: rgba(45, 212, 191, 0.58);
   background: #27302a;
 }
 
 .icon-button:active,
+.primary-button:active,
 .touch-controls button:active,
 .board-overlay button:active {
   transform: translateY(1px);
+}
+
+.home-screen,
+.game-screen {
+  width: 100%;
+}
+
+.home-screen[hidden],
+.game-screen[hidden] {
+  display: none;
+}
+
+.home-screen {
+  min-height: min(620px, calc(100dvh - 78px));
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 28px;
+  text-align: center;
+}
+
+.home-brand h1 {
+  font-size: clamp(2.3rem, 9vw, 4.8rem);
+}
+
+.primary-button {
+  min-width: min(100%, 280px);
+  min-height: 58px;
+  padding: 0 24px;
+  color: #07120f;
+  background: var(--accent);
+  border-color: transparent;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.primary-button:hover {
+  background: #42e4d0;
 }
 
 .scoreboard {
@@ -124,7 +183,8 @@ h1 {
 }
 
 .scoreboard span,
-.panel-label {
+.panel-label,
+.button-sub {
   display: block;
   color: var(--muted);
   font-size: 0.72rem;
@@ -162,6 +222,7 @@ h1 {
   width: 100%;
   max-width: 112px;
   height: auto;
+  border-radius: 6px;
 }
 
 .board-wrap {
@@ -177,6 +238,7 @@ h1 {
   border: 2px solid rgba(245, 242, 234, 0.18);
   border-radius: 8px;
   background: #090b0a;
+  touch-action: none;
 }
 
 .board-overlay {
@@ -212,58 +274,207 @@ h1 {
 
 .touch-controls {
   display: grid;
-  grid-template-columns: repeat(6, minmax(42px, 1fr));
   gap: 8px;
   margin-top: 14px;
 }
 
+.touch-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .touch-controls button {
-  min-height: 46px;
+  min-height: 52px;
   display: grid;
   place-items: center;
+  gap: 1px;
+  padding: 6px 8px;
   color: var(--text);
-  font-size: 1.15rem;
   font-weight: 900;
+  line-height: 1;
   user-select: none;
   touch-action: none;
 }
 
-.touch-controls button[data-action="drop"] {
+.button-main {
+  display: block;
+  overflow: hidden;
+  width: 100%;
+  font-size: 1.22rem;
+  line-height: 1;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.action-row button[data-action="drop"] {
   color: #141106;
   background: var(--gold);
   border-color: transparent;
 }
 
+.move-row .button-main {
+  font-size: 1.65rem;
+}
+
 @media (max-width: 680px) {
+  body {
+    background: #101210;
+  }
+
   .app {
     align-items: start;
-    padding: 10px;
+    padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom));
   }
 
   .game-shell {
-    padding: 12px;
+    width: 100%;
+    padding: 10px;
+    box-shadow: none;
+  }
+
+  .home-screen {
+    min-height: calc(100dvh - 38px);
+    gap: 24px;
+  }
+
+  .home-brand h1 {
+    font-size: clamp(2.5rem, 16vw, 4.2rem);
+  }
+
+  .primary-button {
+    width: min(100%, 320px);
+    min-height: 62px;
   }
 
   .topbar {
-    margin-bottom: 10px;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .eyebrow {
+    display: none;
+  }
+
+  h1 {
+    font-size: 1.35rem;
+  }
+
+  .toolbar {
+    gap: 6px;
+  }
+
+  .icon-button {
+    width: 38px;
+    height: 38px;
+    font-size: 0.78rem;
+  }
+
+  .scoreboard {
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .scoreboard div {
+    padding: 7px 8px;
+  }
+
+  .scoreboard span,
+  .panel-label,
+  .button-sub {
+    font-size: 0.62rem;
+  }
+
+  .scoreboard strong {
+    font-size: 1.03rem;
   }
 
   .play-area {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: clamp(56px, 17vw, 68px) minmax(188px, min(58vw, 300px)) clamp(56px, 17vw, 68px);
+    gap: 7px;
   }
 
   .board-wrap {
-    grid-column: 1 / -1;
-    grid-row: 1;
-    justify-self: center;
-    width: min(72vw, 300px);
+    width: clamp(188px, calc((100dvh - 248px) / 2), 300px);
+    max-width: min(58vw, 300px);
   }
 
   .side-panel {
-    min-height: 118px;
+    gap: 5px;
+    padding: 6px 4px;
+  }
+
+  .side-panel canvas {
+    max-width: 52px;
   }
 
   .touch-controls {
-    grid-template-columns: repeat(3, minmax(58px, 1fr));
+    position: sticky;
+    bottom: 0;
+    gap: 7px;
+    margin-top: 8px;
+    padding: 8px 0 max(0px, env(safe-area-inset-bottom));
+    background: var(--panel);
+  }
+
+  .touch-row {
+    gap: 7px;
+  }
+
+  .touch-controls button {
+    min-height: 56px;
+    padding: 7px 6px;
+  }
+
+  .move-row button {
+    min-height: 64px;
+  }
+
+  .button-main {
+    font-size: 1rem;
+  }
+
+  .move-row .button-main {
+    font-size: 1.72rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .play-area {
+    grid-template-columns: 52px minmax(176px, 1fr) 52px;
+    gap: 6px;
+  }
+
+  .board-wrap {
+    width: 176px;
+    max-width: 56vw;
+  }
+
+  .side-panel canvas {
+    max-width: 46px;
+  }
+}
+
+@media (max-width: 680px) and (max-height: 720px) {
+  .game-shell {
+    padding: 8px;
+  }
+
+  .scoreboard div {
+    padding: 6px 7px;
+  }
+
+  .board-wrap {
+    width: clamp(174px, calc((100dvh - 230px) / 2), 270px);
+    max-width: 55vw;
+  }
+
+  .touch-controls button {
+    min-height: 49px;
+  }
+
+  .move-row button {
+    min-height: 56px;
   }
 }
