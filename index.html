@@ -14,9 +14,47 @@
           <p class="eyebrow">BLOCK PUZZLE</p>
           <h1>&#12486;&#12488;&#12522;&#12473;</h1>
         </div>
-        <button class="primary-button" id="singlePlayButton" type="button">
-          &#12471;&#12531;&#12464;&#12523;&#12503;&#12524;&#12452;
-        </button>
+        <div class="home-actions">
+          <button class="primary-button" id="singlePlayButton" type="button">
+            &#12471;&#12531;&#12464;&#12523;&#12503;&#12524;&#12452;
+          </button>
+          <button class="secondary-button" id="settingsButton" type="button">
+            &#35373;&#23450;
+          </button>
+        </div>
+      </section>
+
+      <section class="settings-screen" id="settingsScreen" aria-label="Settings" hidden>
+        <header class="settings-header">
+          <div>
+            <p class="eyebrow">SETTINGS</p>
+            <h1>&#35373;&#23450;</h1>
+          </div>
+          <button class="icon-button" id="settingsBackButton" type="button" aria-label="Back" title="Back">
+            <span aria-hidden="true">&#8592;</span>
+          </button>
+        </header>
+
+        <div class="settings-list">
+          <label class="setting-row">
+            <span class="setting-copy">
+              <strong>BGM</strong>
+              <span>&#12458;&#12531; / &#12458;&#12501;</span>
+            </span>
+            <span class="toggle-control">
+              <input id="bgmToggle" type="checkbox" checked />
+              <span class="toggle-track" aria-hidden="true"></span>
+            </span>
+          </label>
+
+          <label class="setting-row">
+            <span class="setting-copy">
+              <strong>&#38899;&#37327;</strong>
+              <span id="bgmVolumeValue">36%</span>
+            </span>
+            <input class="range-control" id="bgmVolume" type="range" min="0" max="100" step="1" value="36" />
+          </label>
+        </div>
       </section>
 
       <div class="game-screen" id="gameScreen" hidden>

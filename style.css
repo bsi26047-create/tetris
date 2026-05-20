@@ -92,6 +92,7 @@ h1 {
 
 .icon-button,
 .primary-button,
+.secondary-button,
 .touch-controls button,
 .board-overlay button {
   border: 1px solid var(--line);
@@ -112,6 +113,7 @@ h1 {
 
 .icon-button:hover,
 .primary-button:hover,
+.secondary-button:hover,
 .touch-controls button:hover,
 .board-overlay button:hover {
   border-color: rgba(45, 212, 191, 0.58);
@@ -120,17 +122,20 @@ h1 {
 
 .icon-button:active,
 .primary-button:active,
+.secondary-button:active,
 .touch-controls button:active,
 .board-overlay button:active {
   transform: translateY(1px);
 }
 
 .home-screen,
+.settings-screen,
 .game-screen {
   width: 100%;
 }
 
 .home-screen[hidden],
+.settings-screen[hidden],
 .game-screen[hidden] {
   display: none;
 }
@@ -148,8 +153,14 @@ h1 {
   font-size: clamp(2.3rem, 9vw, 4.8rem);
 }
 
+.home-actions {
+  width: min(100%, 280px);
+  display: grid;
+  gap: 10px;
+}
+
 .primary-button {
-  min-width: min(100%, 280px);
+  width: 100%;
   min-height: 58px;
   padding: 0 24px;
   color: #07120f;
@@ -161,6 +172,120 @@ h1 {
 
 .primary-button:hover {
   background: #42e4d0;
+}
+
+.secondary-button {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 24px;
+  color: var(--text);
+  font-weight: 900;
+}
+
+.settings-screen {
+  min-height: min(620px, calc(100dvh - 78px));
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.settings-list {
+  display: grid;
+  gap: 10px;
+}
+
+.setting-row {
+  min-height: 82px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #151716;
+}
+
+.setting-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.setting-copy strong,
+.setting-copy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.setting-copy strong {
+  font-size: 1.08rem;
+}
+
+.setting-copy span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.toggle-control {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 58px;
+  height: 34px;
+}
+
+.toggle-control input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  margin: 0;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #252923;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.toggle-track::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 140ms ease, background 140ms ease;
+}
+
+.toggle-control input:checked + .toggle-track {
+  border-color: rgba(45, 212, 191, 0.62);
+  background: rgba(45, 212, 191, 0.2);
+}
+
+.toggle-control input:checked + .toggle-track::after {
+  transform: translateX(24px);
+  background: var(--accent);
+}
+
+.range-control {
+  width: clamp(150px, 28vw, 260px);
+  accent-color: var(--accent);
+  cursor: pointer;
 }
 
 .scoreboard {
@@ -346,6 +471,33 @@ h1 {
   .primary-button {
     width: min(100%, 320px);
     min-height: 62px;
+  }
+
+  .home-actions {
+    width: min(100%, 320px);
+  }
+
+  .secondary-button {
+    min-height: 56px;
+  }
+
+  .settings-screen {
+    min-height: calc(100dvh - 38px);
+  }
+
+  .settings-header {
+    margin-bottom: 12px;
+  }
+
+  .setting-row {
+    min-height: 76px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .range-control {
+    width: 100%;
   }
 
   .topbar {

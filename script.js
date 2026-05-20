@@ -6,8 +6,14 @@ const nextCanvas = document.getElementById("next");
 const nextContext = nextCanvas.getContext("2d");
 
 const homeScreen = document.getElementById("homeScreen");
+const settingsScreen = document.getElementById("settingsScreen");
 const gameScreen = document.getElementById("gameScreen");
 const singlePlayButton = document.getElementById("singlePlayButton");
+const settingsButton = document.getElementById("settingsButton");
+const settingsBackButton = document.getElementById("settingsBackButton");
+const bgmToggle = document.getElementById("bgmToggle");
+const bgmVolume = document.getElementById("bgmVolume");
+const bgmVolumeValue = document.getElementById("bgmVolumeValue");
 const scoreElement = document.getElementById("score");
 const levelElement = document.getElementById("level");
 const linesElement = document.getElementById("lines");
@@ -23,8 +29,20 @@ const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30;
 const START_MESSAGE_MS = 900;
-const BGM_VOLUME = 0.36;
-const TYPES = ["I", "J", "L", "O", "S", "T", "Z", "P", "U", "X", "V", "W", "F"];
+const DEFAULT_BGM_VOLUME = 0.36;
+const SETTINGS_STORAGE_KEY = "tetrisSettings";
+const BASE_DROP_INTERVAL = 1000;
+const MIN_DROP_INTERVAL = 90;
+const DROP_INTERVAL_STEP = 70;
+const SCORE_PER_LEVEL = 1000;
+const TYPE_UNLOCKS = [
+  { level: 1, types: ["I", "O", "T"] },
+  { level: 2, types: ["J", "L"] },
+  { level: 3, types: ["S", "Z"] },
+  { level: 4, types: ["P", "U"] },
+  { level: 5, types: ["V", "W"] },
+  { level: 6, types: ["X", "F"] },
+];
 const LINE_POINTS = [0, 100, 300, 500, 800];
 
 const COLORS = {
@@ -122,20 +140,82 @@ const state = {
   level: 1,
   lines: 0,
   dropCounter: 0,
-  dropInterval: 1000,
+  dropInterval: BASE_DROP_INTERVAL,
   lastTime: 0,
   status: "home",
   particles: [],
+  settings: loadSettings(),
 };
 
 let startMessageTimer = null;
 
+function loadSettings() {
+  const settings = {
+    bgmEnabled: true,
+    bgmVolume: DEFAULT_BGM_VOLUME,
+  };
+
+  try {
+    const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (!savedSettings) {
+      return settings;
+    }
+
+    const parsedSettings = JSON.parse(savedSettings);
+    if (typeof parsedSettings.bgmEnabled === "boolean") {
+      settings.bgmEnabled = parsedSettings.bgmEnabled;
+    }
+
+    const savedVolume = Number(parsedSettings.bgmVolume);
+    if (Number.isFinite(savedVolume)) {
+      settings.bgmVolume = clamp(savedVolume, 0, 1);
+    }
+  } catch {
+    return settings;
+  }
+
+  return settings;
+}
+
+function saveSettings() {
+  try {
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(state.settings));
+  } catch {}
+}
+
+function updateSettingsControls() {
+  const volumePercent = Math.round(state.settings.bgmVolume * 100);
+  bgmToggle.checked = state.settings.bgmEnabled;
+  bgmVolume.value = volumePercent.toString();
+  bgmVolumeValue.textContent = `${volumePercent}%`;
+}
+
+function setBgmEnabled(enabled) {
+  state.settings.bgmEnabled = enabled;
+  saveSettings();
+  updateSettingsControls();
+  syncBgmWithStatus();
+}
+
+function setBgmVolume(percent) {
+  state.settings.bgmVolume = clamp(percent / 100, 0, 1);
+
+  if (bgm) {
+    bgm.volume = state.settings.bgmVolume;
+  }
+
+  saveSettings();
+  updateSettingsControls();
+  syncBgmWithStatus();
+}
+
 function playBgm() {
-  if (!bgm) {
+  if (!bgm || !state.settings.bgmEnabled) {
+    pauseBgm();
     return;
   }
 
-  bgm.volume = BGM_VOLUME;
+  bgm.volume = state.settings.bgmVolume;
   bgm.loop = true;
   const playPromise = bgm.play();
   if (playPromise) {
@@ -159,7 +239,7 @@ function resetBgm() {
 }
 
 function syncBgmWithStatus() {
-  if (state.status === "playing" || state.status === "starting") {
+  if (state.settings.bgmEnabled && (state.status === "playing" || state.status === "starting")) {
     playBgm();
   } else {
     pauseBgm();
@@ -185,9 +265,21 @@ function shuffle(values) {
 
 function takeFromBag() {
   if (state.bag.length === 0) {
-    state.bag = shuffle(TYPES);
+    state.bag = shuffle(getAvailableTypes());
   }
   return state.bag.pop();
+}
+
+function getAvailableTypes(level = state.level) {
+  const availableTypes = [];
+
+  TYPE_UNLOCKS.forEach(group => {
+    if (level >= group.level) {
+      availableTypes.push(...group.types);
+    }
+  });
+
+  return availableTypes;
 }
 
 function fillQueue() {
@@ -374,8 +466,6 @@ function clearLines() {
   if (cleared > 0) {
     state.score += getLineScore(cleared);
     state.lines += cleared;
-    state.level = Math.floor(state.lines / 10) + 1;
-    state.dropInterval = Math.max(90, 1000 - (state.level - 1) * 70);
     updateScore();
   }
 }
@@ -620,7 +710,22 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
+function updateProgression() {
+  const nextLevel = Math.floor(state.score / SCORE_PER_LEVEL) + 1;
+  const levelChanged = nextLevel !== state.level;
+  state.level = nextLevel;
+  state.dropInterval = Math.max(
+    MIN_DROP_INTERVAL,
+    BASE_DROP_INTERVAL - (state.level - 1) * DROP_INTERVAL_STEP
+  );
+
+  if (levelChanged) {
+    state.bag = [];
+  }
+}
+
 function updateScore() {
+  updateProgression();
   scoreElement.textContent = state.score.toLocaleString("ja-JP");
   levelElement.textContent = state.level.toString();
   linesElement.textContent = state.lines.toString();
@@ -680,20 +785,32 @@ function togglePause() {
     state.dropCounter = 0;
     state.lastTime = performance.now();
     updateOverlay();
-  } else {
+  } else if (state.status === "home" || state.status === "gameover") {
     newGame();
   }
 }
 
 function showHome() {
   homeScreen.hidden = false;
+  settingsScreen.hidden = true;
   gameScreen.hidden = true;
   state.status = "home";
   updateOverlay();
 }
 
+function showSettings() {
+  clearStartMessageTimer();
+  homeScreen.hidden = true;
+  settingsScreen.hidden = false;
+  gameScreen.hidden = true;
+  state.status = "settings";
+  updateSettingsControls();
+  updateOverlay();
+}
+
 function showGame() {
   homeScreen.hidden = true;
+  settingsScreen.hidden = true;
   gameScreen.hidden = false;
 }
 
@@ -738,7 +855,7 @@ function newGame() {
   state.level = 1;
   state.lines = 0;
   state.dropCounter = 0;
-  state.dropInterval = 1000;
+  state.dropInterval = BASE_DROP_INTERVAL;
   state.lastTime = performance.now();
   state.status = "starting";
   state.particles = [];
@@ -789,6 +906,10 @@ startButton.addEventListener("click", togglePause);
 resetButton.addEventListener("click", newGame);
 overlayButton.addEventListener("click", togglePause);
 singlePlayButton.addEventListener("click", newGame);
+settingsButton.addEventListener("click", showSettings);
+settingsBackButton.addEventListener("click", showHome);
+bgmToggle.addEventListener("change", () => setBgmEnabled(bgmToggle.checked));
+bgmVolume.addEventListener("input", () => setBgmVolume(Number(bgmVolume.value)));
 
 let boardPointer = null;
 
@@ -846,6 +967,10 @@ window.addEventListener("keydown", event => {
   const key = event.key.toLowerCase();
   const handledKeys = ["arrowleft", "arrowright", "arrowdown", "arrowup", " ", "z", "x", "c", "shift", "p", "enter"];
 
+  if (state.status === "settings") {
+    return;
+  }
+
   if (!handledKeys.includes(key)) {
     return;
   }
@@ -901,5 +1026,6 @@ document.querySelectorAll(".touch-controls button").forEach(button => {
   button.addEventListener("pointerleave", stopRepeat);
 });
 
+updateSettingsControls();
 showHome();
 requestAnimationFrame(update);
